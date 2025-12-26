@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>CSBS HRM | Pro Study Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -152,12 +152,23 @@
             content: '🔥';
             margin-right: 4px;
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .study-header { padding: 12px 16px; }
+            .study-body { padding: 16px; }
+            .chart-wrapper { height: 200px; }
+        }
+
+        /* Safe-area support for notched devices */
+        .safe-top { padding-top: env(safe-area-inset-top); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
-<body class="text-slate-800 h-screen overflow-hidden flex flex-col md:flex-row font-sans">
+<body class="text-slate-800 h-screen overflow-hidden flex flex-col md:flex-row font-sans safe-top">
 
     <!-- SIDEBAR -->
-    <aside class="w-full md:w-72 bg-white/95 backdrop-blur-md border-r border-slate-200 flex-shrink-0 flex flex-col z-20 shadow-sm md:h-screen">
+    <aside id="mobileSidebar" class="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white/95 backdrop-blur-md border-r border-slate-200 flex-shrink-0 flex flex-col z-30 shadow-sm transform -translate-x-full transition-transform duration-200 ease-out md:static md:translate-x-0 md:w-72 md:h-screen">
         <div class="h-20 flex items-center px-6 border-b border-slate-100">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white font-extrabold mr-3 shadow-lg shadow-sky-500/20">
                 HR
@@ -218,6 +229,8 @@
             </button>
         </nav>
     </aside>
+    <!-- Mobile overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black/40 hidden md:hidden z-20"></div>
 
     <!-- MAIN CONTENT -->
     <main class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50 p-4 md:p-8 relative">
@@ -227,6 +240,8 @@
                 <h1 class="text-3xl font-bold text-slate-900 tracking-tight" id="page-title">Study Overview</h1>
                 <p class="text-slate-500 mt-1 text-lg" id="page-subtitle">Welcome to your comprehensive revision space.</p>
             </div>
+            <!-- Mobile menu button -->
+            <button id="mobileMenuBtn" class="md:hidden inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 text-slate-700 bg-white shadow-sm" onclick="openSidebar()" aria-controls="mobileSidebar" aria-expanded="false">☰ Menu</button>
             <div id="unit-badge" class="hidden md:block mt-4 md:mt-0">
                 <!-- Dynamic badge populated by JS -->
             </div>
@@ -705,6 +720,11 @@
                     el.classList.add('hidden');
                 }
             });
+
+            // Close sidebar on mobile after navigation
+            if (window.innerWidth < 768) {
+                try { closeSidebar(); } catch {}
+            }
         }
 
         // --- Chart Config ---
@@ -747,6 +767,31 @@
                     }
                 }
             });
+
+            // Mobile sidebar controls
+            const mobileSidebar = document.getElementById('mobileSidebar');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+            window.openSidebar = function() {
+                if (!mobileSidebar || !mobileOverlay) return;
+                mobileSidebar.classList.remove('-translate-x-full');
+                mobileOverlay.classList.remove('hidden');
+                if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', 'true');
+                // Prevent background scroll on small screens
+                document.body.classList.add('overflow-hidden');
+            };
+
+            window.closeSidebar = function() {
+                if (!mobileSidebar || !mobileOverlay) return;
+                mobileSidebar.classList.add('-translate-x-full');
+                mobileOverlay.classList.add('hidden');
+                if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                document.body.classList.remove('overflow-hidden');
+            };
+
+            mobileOverlay && mobileOverlay.addEventListener('click', window.closeSidebar);
+            window.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeSidebar(); });
         });
     </script>
 </body>
